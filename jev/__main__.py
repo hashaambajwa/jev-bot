@@ -73,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "import-chat":
             events = import_openai_chat(_json_file(args.transcript), run_id=args.run_id)
             Path(args.output).write_text(
-                "\\n".join(json.dumps(event, sort_keys=True) for event in events) + "\\n",
+                "\n".join(json.dumps(event, sort_keys=True) for event in events) + "\n",
                 encoding="utf-8",
             )
             print(f"wrote {args.output}", file=sys.stderr)

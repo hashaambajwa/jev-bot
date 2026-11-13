@@ -1,8 +1,11 @@
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
 from jev.adapters import AdapterError, import_openai_chat
+from jev.__main__ import main
+from jev.trace import read_trace
 
 
 EXAMPLE = Path(__file__).resolve().parents[1] / "examples" / "openai-chat.json"
@@ -33,6 +36,16 @@ class AdapterTests(unittest.TestCase):
         data["messages"][1]["tool_calls"][0]["function"]["arguments"] = '{"amount": NaN}'
         with self.assertRaises(AdapterError):
             import_openai_chat(data, run_id="invalid")
+
+    def test_cli_import_produces_readable_jsonl(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "imported.jsonl"
+            result = main([
+                "import-chat", str(EXAMPLE), "--run-id", "imported",
+                "--output", str(path),
+            ])
+            self.assertEqual(result, 0)
+            self.assertEqual(read_trace(path).tools, ["search"])
 
     def test_missing_result_rejected(self):
         data = json.loads(EXAMPLE.read_text())
