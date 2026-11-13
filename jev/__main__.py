@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .evaluation import SuiteError, compare_reports, evaluate_suite
+from .adapters import AdapterError, import_openai_chat
 from .jsonutil import strict_loads
 from .policy import PolicyError, evaluate_proposal, load_policy
 from .trace import TraceError
@@ -46,6 +47,10 @@ def main(argv: list[str] | None = None) -> int:
     ev = subs.add_parser("eval", help="evaluate a fixture suite of JSONL traces")
     ev.add_argument("suite")
     ev.add_argument("--output", help="write a JSON report")
+    imp = subs.add_parser("import-chat", help="import recorded OpenAI-style chat tool calls")
+    imp.add_argument("transcript", help="recorded chat JSON with call_metrics")
+    imp.add_argument("--run-id", required=True)
+    imp.add_argument("--output", required=True, help="write JSONL trace")
     cmp_ = subs.add_parser("compare", help="compare matched evaluation reports")
     cmp_.add_argument("baseline")
     cmp_.add_argument("candidate")
@@ -65,11 +70,19 @@ def main(argv: list[str] | None = None) -> int:
             report = evaluate_suite(args.suite)
             _write_report(report, args.output)
             return 0 if report["summary"]["passed"] == report["summary"]["cases"] else 1
+        if args.command == "import-chat":
+            events = import_openai_chat(_json_file(args.transcript), run_id=args.run_id)
+            Path(args.output).write_text(
+                "\\n".join(json.dumps(event, sort_keys=True) for event in events) + "\\n",
+                encoding="utf-8",
+            )
+            print(f"wrote {args.output}", file=sys.stderr)
+            return 0
         if args.command == "compare":
             report = compare_reports(_json_file(args.baseline), _json_file(args.candidate))
             _write_report(report, args.output)
             return 0 if report["passed_regression_gate"] else 1
-    except (OSError, ValueError, PolicyError, TraceError, SuiteError) as exc:
+    except (OSError, ValueError, PolicyError, TraceError, SuiteError, AdapterError) as exc:
         print(f"jev: {exc}", file=sys.stderr)
         return 2
     return 2

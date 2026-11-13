@@ -1,0 +1,25 @@
+{
+  "messages": [
+    {"role": "user", "content": "Find sources about structured outputs."},
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call-1",
+          "type": "function",
+          "function": {"name": "search", "arguments": "{\"query\":\"structured outputs\"}"}
+        }
+      ]
+    },
+    {"role": "tool", "tool_call_id": "call-1", "content": "{\"sources\":[\"example.com\"]}"},
+    {"role": "assistant", "content": "Found sources about structured outputs."}
+  ],
+  "call_metrics": {
+    "call-1": {
+      "success": true,
+      "approved": false,
+      "cost_usd": 0.004,
+      "latency_ms": 80
+    }
+  }
+}
