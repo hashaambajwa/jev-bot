@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .policy import PolicyError, _number
+from .jsonutil import strict_loads
 
 
 class TraceError(ValueError):
@@ -52,9 +53,9 @@ def read_trace(path: str | Path, *, max_bytes: int = 2_000_000, max_events: int 
 
     for index, line in enumerate(lines):
         try:
-            event = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise TraceError(f"line {index+1}: invalid JSON: {exc.msg}") from exc
+            event = strict_loads(line)
+        except ValueError as exc:
+            raise TraceError(f"line {index+1}: invalid JSON: {exc}") from exc
         if not isinstance(event, dict):
             raise TraceError(f"line {index+1}: event must be an object")
         if event.get("step") != index or isinstance(event.get("step"), bool):

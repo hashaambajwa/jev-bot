@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .policy import PolicyError, evaluate_proposal, validate_policy
+from .jsonutil import strict_loads
 from .trace import Trace, TraceError, read_trace
 
 
@@ -130,8 +131,8 @@ def _resolve_trace(root: Path, relpath: str) -> Path:
 def evaluate_suite(suite_path: str | Path) -> dict[str, Any]:
     suite_path = Path(suite_path).resolve()
     try:
-        suite = json.loads(suite_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        suite = strict_loads(suite_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
         raise SuiteError(f"cannot read suite: {exc}") from exc
     if not isinstance(suite, dict) or suite.get("version") != 1:
         raise SuiteError("suite must be an object with version 1")

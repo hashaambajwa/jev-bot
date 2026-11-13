@@ -7,6 +7,8 @@ authorization. The caller must enforce a denied decision before tool execution.
 from __future__ import annotations
 
 import json
+
+from .jsonutil import strict_loads
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -82,8 +84,8 @@ def validate_policy(policy: Mapping[str, Any]) -> dict[str, Any]:
 
 def load_policy(path: str | Path) -> dict[str, Any]:
     try:
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        data = strict_loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
         raise PolicyError(f"cannot read policy: {exc}") from exc
     return validate_policy(data)
 

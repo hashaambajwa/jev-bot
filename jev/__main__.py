@@ -9,14 +9,15 @@ from pathlib import Path
 from typing import Any
 
 from .evaluation import SuiteError, compare_reports, evaluate_suite
+from .jsonutil import strict_loads
 from .policy import PolicyError, evaluate_proposal, load_policy
 from .trace import TraceError
 
 
 def _json_file(path: str) -> dict[str, Any]:
     try:
-        value = json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        value = strict_loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
         raise ValueError(f"cannot load JSON file {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise ValueError(f"JSON file {path} must contain an object")
