@@ -1,0 +1,53 @@
+# Integration guide
+
+Jev does not run an LLM. You add a lightweight boundary check to your existing tool dispatcher and record a trace in the JSONL format described in architecture.md.
+
+## Guard a tool before executing it
+
+    import json
+    from jev.policy import PolicyError, evaluate_proposal, load_policy
+
+    POLICY = load_policy("examples/policy.json")
+
+    def dispatch_tool(name, arguments, trusted_approval, call_count, spent_usd):
+        # trusted_approval MUST originate from your application, not the model.
+        proposal = {
+            "tool": name,
+            "arguments": arguments,
+            "approved": trusted_approval,
+            "cost_estimate_usd": 0.005,
+        }
+        try:
+            decision = evaluate_proposal(
+                POLICY, proposal,
+                previous_calls=call_count,
+                previous_cost_usd=spent_usd,
+            )
+        except PolicyError:
+            raise PermissionError("Malformed tool proposal; denied")
+        if not decision.allowed:
+            raise PermissionError(f"Tool invocation denied: {decision.reasons}")
+        return actually_execute_tool(name, arguments)  # your own dispatcher
+
+The example intentionally leaves `actually_execute_tool` for the host application. Only the trusted dispatcher can enforce a policy; a model cannot grant its own approval.
+
+## Emit JSONL
+
+Record one `tool_call` event before a call and one `tool_result` after it. Give every invocation a unique `call_id`; preserve each tool response's success state. Close the trace with one final event. Use a single run_id and increasing step values.
+
+If a tool call errors, emit `tool_result.success = false` before `final`. If the process crashes and emits no final event, the trace will fail validation rather than produce a misleading pass.
+
+## Write assertions close to the problem
+
+Create a JSON suite with a stable `id`, a relative `trace` filename and an `expect` object for each case. Include a task-specific outcome assertion; otherwise a merely well-formed but incorrect trajectory can appear to pass.
+
+    python -m jev eval examples/suite.json --output results.json
+    python -m jev compare examples/reference-results.json results.json
+
+Exit codes: 0 means all gates passed; 1 means a valid decision was denied, at least one case failed, or a regression was found; 2 means invalid configuration or IO errors.
+
+## CI workflow
+
+The repository's workflow runs its unit tests on Python 3.11 and 3.12, checks the positive example suite against a checked-in baseline, and asserts that the known-bad example fails. For real product use, collect your own representative traces and review changes to task assertions alongside code changes.
+
+Do not use synthetic fixture success as an LLM accuracy metric. Test live agents with pinned prompts, datasets, models, dependencies, budgets and environment, and report uncertainty separately.
