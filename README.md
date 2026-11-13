@@ -1,5 +1,7 @@
 # Jev
 
+[![CI](https://github.com/hashaambajwa/jev-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/hashaambajwa/jev-bot/actions/workflows/ci.yml)
+
 **Decision-time contracts and offline evaluation for tool-using AI agents.**
 
 Jev is a small, dependency-free Python toolkit for validating agent tool calls *before execution* and grading completed trajectories *after execution*. It provides explainable policy decisions, trace integrity checks, and repeatable regression gates.
@@ -25,6 +27,23 @@ Features:
 - Task-specific assertions, failure categories and aggregate p50/p95 metrics
 - Machine-readable reports and CI-friendly exit codes
 - Standard-library runtime; no model credentials or external network calls
+
+## Example contracts and outcomes
+
+Run a safe request through the decision gate:
+
+    jev gate examples/proposal.json --policy examples/policy.json
+
+The answer is machine-readable and returns exit code 0:
+
+    { "allowed": true, "reasons": [] }
+
+The positive suite contains two reproducible traces and assertions; it should pass. The separate adversarial suite contains a forbidden deletion action, a secret-like argument key and a cost overrun. It **must fail** and its failed exit status is checked in CI.
+
+    jev eval examples/suite.json --output results.json
+    jev eval examples/adversarial-suite.json
+
+For every evaluated trace, Jev returns stable failure reasons, the tool-call count, latency and observed cost. It also provides aggregate pass rates and interpolated p50/p95 latencies. See the [architecture and threat model](docs/architecture.md) for what these metrics mean and what they do not mean.
 
 ## Repository layout
 
