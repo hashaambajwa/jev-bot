@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "allowed_tools": ["search", "summarize"],
+  "approval_required": ["summarize"],
+  "forbidden_argument_keys": ["api_key", "password", "authorization"],
+  "max_tool_calls": 3,
+  "max_total_cost_usd": 0.05
+}

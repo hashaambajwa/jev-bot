@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "policy": {
+    "version": 1,
+    "allowed_tools": ["search", "summarize"],
+    "approval_required": ["summarize"],
+    "forbidden_argument_keys": ["api_key", "password", "authorization"],
+    "max_tool_calls": 3,
+    "max_total_cost_usd": 0.05
+  },
+  "cases": [
+    {
+      "id": "search-citation",
+      "trace": "traces/search.jsonl",
+      "expect": {
+        "must_call": ["search"],
+        "must_not_call": ["delete_record"],
+        "tool_sequence": ["search"],
+        "final_contains": ["sources"],
+        "max_tool_calls": 2,
+        "max_cost_usd": 0.02,
+        "max_latency_ms": 300,
+        "require_successful_tools": true
+      }
+    },
+    {
+      "id": "approved-summary",
+      "trace": "traces/approved.jsonl",
+      "expect": {
+        "must_call": ["summarize"],
+        "final_contains": ["summary"],
+        "max_tool_calls": 2,
+        "max_cost_usd": 0.03,
+        "require_successful_tools": true
+      }
+    }
+  ]
+}

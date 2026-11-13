@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "summary": {
+    "cases": 2,
+    "passed": 2,
+    "pass_rate": 1.0,
+    "total_cost_usd": 0.02,
+    "p50_latency_ms": 200.0,
+    "p95_latency_ms": 272.0
+  },
+  "cases": [
+    {
+      "id": "search-citation",
+      "passed": true,
+      "failures": [],
+      "tool_calls": 1,
+      "cost_usd": 0.008,
+      "latency_ms": 120.0
+    },
+    {
+      "id": "approved-summary",
+      "passed": true,
+      "failures": [],
+      "tool_calls": 1,
+      "cost_usd": 0.012,
+      "latency_ms": 280.0
+    }
+  ]
+}
